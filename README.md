@@ -33,4 +33,3 @@ is a short process described in the User Guide. Your data is never deleted or lo
 
 **Verify your download:** compare its SHA-256 with `SHA256SUMS.txt` in the release.
 This repository contains downloads only.
-# firm-manager-downloads
