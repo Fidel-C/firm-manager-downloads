@@ -9,8 +9,10 @@ Firm Manager has two programs. Install the **server** on ONE computer (the centr
 
 | Your computer | Server (central computer) | Client (every computer) |
 |---|---|---|
-| Windows 10 / 11 | `FirmManagerServer-Setup-*-windows-x64.exe` | `FirmManager-Setup-*-windows-x64.exe` |
-| Debian / Ubuntu | `firmmanager-server_*_amd64.deb` | `firmmanager-client_*_amd64.deb` |
+| Windows 10 / 11 (64-bit) | `FirmManagerServer-Setup-*-windows-x64.exe` | `FirmManager-Setup-*-windows-x64.exe` |
+| macOS 12+, Apple Silicon (M1 or later) | `FirmManagerServer-Setup-*-macos-arm64.pkg` | `FirmManager-Setup-*-macos-arm64.pkg` |
+| macOS 12+, Intel | `FirmManagerServer-Setup-*-macos-x64.pkg` | `FirmManager-Setup-*-macos-x64.pkg` |
+| Ubuntu 22.04+ / Debian 12+ | `firmmanager-server_*_amd64.deb` | `firmmanager-client_*_amd64.deb` |
 
 Step by step, with pictures: **[User Guide](USER_GUIDE.md)**.
 

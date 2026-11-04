@@ -33,7 +33,17 @@ connect at the same time (section 17).
    network or router to *reserve* an address for this computer (a "DHCP reservation"), or set a fixed one.
 3. **All computers must be on the same office network** (the same router or Wi-Fi). Do **not** try to use Firm Manager over the internet.
 4. **Keep it off the internet.** Do not open the port on your router and do not put the server on a public Wi-Fi. Section 22 explains why.
-5. You need an **administrator** account on Windows (or `sudo` on Linux) to install the server and, on Windows, to let it start with the computer.
+5. You need an **administrator** account on Windows (or `sudo` on Linux and macOS) to install the server and to let it start with the computer.
+6. **Supported systems** (the same on the central computer and on every client; you can mix them in one office):
+
+| System | Versions | Files |
+|---|---|---|
+| Windows | 10 and 11, 64-bit | `FirmManagerServer-Setup-….exe`, `FirmManager-Setup-….exe` |
+| macOS | 12 or newer. **Two builds:** `macos-arm64` for Apple Silicon (M1 and later) and `macos-x64` for Intel Macs | `FirmManagerServer-Setup-….pkg`, `FirmManager-Setup-….pkg` |
+| Linux | Ubuntu 22.04 or newer, Debian 12 or newer, 64-bit | `firmmanager-server_….deb`, `firmmanager-client_….deb` |
+
+   To see which Mac you have: Apple menu > About This Mac. *Chip: Apple M…* means Apple Silicon; *Processor: Intel…* means Intel.
+   **No internet is needed** to install or run any of these: everything the program needs is inside the installer.
 
 ## 3. Install the server (once, on the central computer)
 ### Windows
@@ -52,12 +62,30 @@ connect at the same time (section 17).
    `sudo ufw allow from 192.168.0.0/16 to any port 8000 proto tcp` (change the range to match your network).
 4. Show the address and Computer ID any time: `firmmanager-server --info`. Data lives in `/var/lib/firmmanager`.
 
+### macOS
+1. Open **`FirmManagerServer-Setup-….pkg`** (the one for your Mac's chip) and follow the steps; you will be asked for an administrator password.
+   If macOS says it *cannot be opened because the developer cannot be verified*, **Control-click the file and choose Open**, then Open again. (This message appears
+   because the program is not yet registered with Apple; it does not mean anything is wrong.)
+2. The installer copies the program to `/usr/local/firmmanager-server`, makes it **start with the Mac and restart if it stops**, allows it through the macOS firewall, and creates the
+   data folder `/Library/Application Support/FirmManager`.
+3. The address other computers must type and the **Computer ID** are saved in `/Library/Application Support/FirmManager/server-info.txt` (open it in TextEdit). You can also run
+   `sudo /usr/local/firmmanager-server/FirmManagerServer --info` in Terminal.
+4. If macOS ever asks whether *FirmManagerServer* may accept incoming network connections, choose **Allow**. Do not forward the port on your router.
+5. To remove the server program (your data stays): `sudo /usr/local/firmmanager-server/uninstall.sh`. Logs: `/Library/Application Support/FirmManager/logs/server.log`.
+6. Keep the Mac awake and plugged in during working hours: *System Settings > Energy* (or *Battery*) > prevent automatic sleeping.
+
 The server needs no screen, no sign-in and no further setup. To check it is running, open `http://ADDRESS:8000/health` in a web browser on any office
 computer; you should see `"status":"ok"`.
 
 ## 4. Install the clients (on every computer where someone works)
 Run **`FirmManager-Setup-….exe`** (Windows) or `sudo apt install ./firmmanager-client_….deb` (Linux) and open **Firm Manager**.
-The client stores only the server's address and a random computer ID on that computer. No firm data is kept there.
+**On Linux,** `sudo apt install ./firmmanager-client_….deb` also installs the system libraries the window needs (it needs no internet only if they are already present; otherwise `apt` fetches them).
+
+**On a Mac,** open `FirmManager-Setup-….pkg` (Control-click > Open if macOS warns about the developer) and Firm Manager appears in **Applications**.
+The first time it starts it takes a few extra seconds to prepare its window; after that it opens at once. No internet connection is needed.
+
+The client stores only the server's address and a random computer ID on that computer (Windows: `%LOCALAPPDATA%\FirmManager`; macOS: `~/Library/Application Support/FirmManager`;
+Linux: `~/.config/firmmanager`). No firm data is kept there.
 
 ## 5. First start and the first administrator
 ![Connecting to the central computer](screenshots/connect.png)
@@ -210,7 +238,7 @@ Backups are made and kept **on the central computer**. **Backup & restore** (Sys
   any update that changes the database.
 * **Restore** replaces the current data with the chosen backup **for everyone** (a safety copy is made first). Everyone is signed out and signs in again.
 * **Copy backups to another drive or computer regularly.** A backup that exists only on the central computer is lost with it. On Windows the folder is
-  `C:\ProgramData\FirmManager\backups`; on Linux `/var/lib/firmmanager/backups`. The central computer's **Computer ID** is not part of a backup: the licence belongs to the computer.
+  `C:\ProgramData\FirmManager\backups`; on macOS `/Library/Application Support/FirmManager/backups`; on Linux `/var/lib/firmmanager/backups`. The central computer's **Computer ID** is not part of a backup: the licence belongs to the computer.
 * If the central computer is lost: install the server on a new computer, restore a copied backup (below), and ask your vendor to re-issue the licence (section 19).
 
 ## 17. Licence and plans
@@ -265,14 +293,20 @@ Server and clients must be the **same version**. A client that does not match sh
 If you used the earlier version where everything ran on one computer, your data can be moved to the server **without changing the original**:
 1. Install the server, but **do not create the first administrator yet**. On the central computer open a terminal as administrator and run  
    `FirmManagerServer --import-db "C:\Users\YOU\AppData\Local\FirmManager" `  (Linux: `firmmanager-server --import-db ~/.local/share/firmmanager`)
-   with the folder that holds the old `firmmanager.sqlite` and `documents`.
+   with the folder that holds the old `firmmanager.sqlite` and `documents` (macOS: `sudo /usr/local/firmmanager-server/FirmManagerServer --import-db "$HOME/Library/Application Support/FirmManager"`).
 2. Install the client, connect to `127.0.0.1` and sign in with your old username and password (no new administrator is needed: your old accounts came across). The old folder is untouched; keep it until you are sure everything is there.
 3. Old licences do not transfer: the licence belongs to the central computer. Ask your vendor to re-issue it.
 
 ## 21. Problems and answers
 * **"Cannot reach the server."** Check: is the central computer on? Are you on the same office network? Is the address right? Open `http://ADDRESS:8000/health` in a browser:
   if it does not answer, the server is not running or something blocks it. Windows: check the *Firm Manager Server* task is running and the network is *Private*.
-  Linux: `systemctl status firmmanager-server`. A firewall or antivirus on the central computer may block port 8000.
+  Linux: `systemctl status firmmanager-server`. macOS: `sudo launchctl print system/com.fidelcmedia.firmmanager.server`. A firewall or antivirus on the central computer may block port 8000.
+* **"This installation is incomplete (the window component is missing)."** The client was not installed completely. Uninstall it and run the installer again; if it still
+  appears, download the installer again (it may have been damaged) and check its SHA-256 (see the release notes).
+* **Windows says "Windows protected your PC".** The program is not yet signed with a Microsoft-recognised certificate. Choose **More info**, then **Run anyway**.
+* **macOS says the developer cannot be verified.** Control-click the installer (or the app) and choose **Open**. If you downloaded it in a browser and it will still not open, run
+  `xattr -dr com.apple.quarantine <the file>` in Terminal.
+* **macOS firewall.** *System Settings > Network > Firewall* must allow *FirmManagerServer* on the central computer.
 * **"The address changed."** The central computer got a new address. Give it a fixed one (section 2). On each client choose **Use a different server**.
 * **"This computer needs an update."** Install the same version on this computer as on the central computer (section 18).
 * **"Your plan allows N computers…"** See section 17: disconnect a computer, wait 5 minutes, or upgrade.
@@ -283,7 +317,7 @@ If you used the earlier version where everything ran on one computer, your data 
 * **A drop-down is missing an option.** Add it under **Custom lists** (section 13).
 * **The menu has fewer pages than a colleague's.** Pages follow the role. Ask the administrator to adjust the role.
 * **Need help?** Email **fidelcmedia@gmail.com** (or message @Fidelcmedia on X, TikTok, Facebook, LinkedIn or YouTube). Say what you were doing, the message you saw, and your Firm Manager version.
-* **Where are the server's logs?** `C:\ProgramData\FirmManager\logs\server.log` (Windows) or `/var/lib/firmmanager/logs/server.log` (Linux). Logs never contain passwords.
+* **Where are the server's logs?** `C:\ProgramData\FirmManager\logs\server.log` (Windows), `/Library/Application Support/FirmManager/logs/server.log` (macOS) or `/var/lib/firmmanager/logs/server.log` (Linux). Logs never contain passwords.
 
 ## 22. Safety notes
 * This guide summarises how the program works. The **End-User Licence Agreement** (`EULA.txt`, shown when you install) is the binding text.
